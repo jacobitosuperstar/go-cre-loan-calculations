@@ -79,6 +79,15 @@ func TestPayment(t *testing.T){
             paymentType: 0,
             want: -8.54,
         },
+        {
+            name: "Totally valid case, fv != 0",
+            rate: 0.00375,
+            numPeriods: 1,
+            pv: 100,
+            fv: -100,
+            paymentType: 0,
+            want: -0.38,
+        },
     }
 
     for _, test := range testCases {
@@ -105,15 +114,6 @@ func TestPrincipalPayments(t *testing.T){
         {
             name: "Everything Zero",
             rate: 0,
-            numPeriods: 0,
-            pv: 0,
-            fv: 0,
-            paymentType: 0,
-            want: []float64{},
-        },
-        {
-            name: "Everything Zero, Valid numPeriods",
-            rate: 0,
             numPeriods: 1,
             pv: 0,
             fv: 0,
@@ -121,31 +121,37 @@ func TestPrincipalPayments(t *testing.T){
             want: []float64{0},
         },
         {
-            name: "Invalid paymentType",
-            rate: 0,
-            numPeriods: 1,
-            pv: 0,
-            fv: 0,
-            paymentType: 5,
-            want: []float64{},
-        },
-        {
             name: "Totally valid case",
-            rate: 0.00375,
+            rate: 0.0375,
             numPeriods: 2,
             pv: 100,
             fv: 0,
             paymentType: 0,
-            want: []float64{-49.9, -50.09},
+            want: []float64{-49.08, -50.92},
+        },
+        {
+            name: "Totally valid case, fv != 0",
+            rate: 0.0375,
+            numPeriods: 2,
+            pv: 100,
+            fv: -20,
+            paymentType: 0,
+            want: []float64{-39.26, -80.74},
         },
     }
 
     for _, test := range testCases {
         t.Run(test.name, func(t *testing.T) {
-            got, _ := PrincipalPayments(test.rate, test.numPeriods, test.pv, test.fv, test.paymentType)
+            got, err := PrincipalPayments(test.rate, test.numPeriods, test.pv, test.fv, test.paymentType)
+
+            if err != nil {
+                t.Errorf("PrincipalPayments internal error: %v", err)
+                return
+            }
 
             if len(got) != len(test.want) {
                 t.Errorf("got: %g, wanted: %g", got, test.want)
+                return
             } else {
                 for i := range got {
                     if got[i] != test.want[i] {
@@ -169,15 +175,6 @@ func TestInterestPayments(t *testing.T){
         want []float64
     }{
         {
-            name: "Everything Zero",
-            rate: 0,
-            numPeriods: 0,
-            pv: 0,
-            fv: 0,
-            paymentType: 0,
-            want: []float64{},
-        },
-        {
             name: "Everything Zero, Valid numPeriods",
             rate: 0,
             numPeriods: 1,
@@ -185,15 +182,6 @@ func TestInterestPayments(t *testing.T){
             fv: 0,
             paymentType: 0,
             want: []float64{0},
-        },
-        {
-            name: "Invalid paymentType",
-            rate: 0,
-            numPeriods: 1,
-            pv: 0,
-            fv: 0,
-            paymentType: 5,
-            want: []float64{},
         },
         {
             name: "Totally valid case",
@@ -204,14 +192,29 @@ func TestInterestPayments(t *testing.T){
             paymentType: 0,
             want: []float64{-0.38, -0.19},
         },
+        {
+            name: "Totally valid case, fv != 0",
+            rate: 0.00375,
+            numPeriods: 2,
+            pv: 100,
+            fv: 20,
+            paymentType: 0,
+            want: []float64{-0.38, -0.15},
+        },
     }
 
     for _, test := range testCases {
         t.Run(test.name, func(t *testing.T) {
-            got, _ := InterestPayments(test.rate, test.numPeriods, test.pv, test.fv, test.paymentType)
+            got, err := InterestPayments(test.rate, test.numPeriods, test.pv, test.fv, test.paymentType)
+
+            if err != nil {
+                t.Errorf("PrincipalPayments internal error: %v", err)
+                return
+            }
 
             if len(got) != len(test.want) {
                 t.Errorf("got: %g, wanted: %g", got, test.want)
+                return
             } else {
                 for i := range got {
                     if got[i] != test.want[i] {
@@ -235,30 +238,12 @@ func TestPresentValue(t *testing.T){
         want float64
     }{
         {
-            name: "Everything Zero",
-            rate: 0,
-            numPeriods: 0,
-            pmt: 0,
-            fv: 0,
-            paymentType: 0,
-            want: 0,
-        },
-        {
             name: "Everything Zero, Valid numPeriods",
             rate: 0,
             numPeriods: 1,
             pmt: 0,
             fv: 0,
             paymentType: 0,
-            want: 0,
-        },
-        {
-            name: "Invalid paymentType",
-            rate: 0,
-            numPeriods: 1,
-            pmt: 0,
-            fv: 0,
-            paymentType: 5,
             want: 0,
         },
         {
@@ -274,7 +259,13 @@ func TestPresentValue(t *testing.T){
 
     for _, test := range testCases {
         t.Run(test.name, func(t *testing.T) {
-            got, _ := PresentValue(test.rate, test.numPeriods, test.pmt, test.fv, test.paymentType)
+            got, err := PresentValue(test.rate, test.numPeriods, test.pmt, test.fv, test.paymentType)
+
+            if err != nil {
+                t.Errorf("PresentValue internal error: %v", err)
+                return
+            }
+
             if got != test.want {
                 t.Errorf("got: %g, wanted: %g", got, test.want)
             }

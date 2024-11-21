@@ -57,7 +57,8 @@ func Payment(
 		return 0.0, &ValidationError{"paymentType", paymentType, "The value must be 0 (PayEnd) or 1 (PayBegin)"}
 	}
 	if rate != 0 {
-		pmt = (-fv - pv*math.Pow(1+rate, float64(numPeriods))) / (1 + rate*float64(paymentType)) / ((math.Pow(1+rate, float64(numPeriods)) - 1) / rate)
+		pmt = ((-fv - pv*math.Pow(1+rate, float64(numPeriods))) * rate) /
+        ((1 + rate*float64(paymentType)) * (math.Pow(1+rate, float64(numPeriods)) - 1))
 	} else {
 		pmt = (-pv - fv) / float64(numPeriods)
 	}
@@ -79,29 +80,42 @@ func interest_and_principal_payments(
     err error,
 ) {
     pmt, err := Payment(rate, numPeriods, pv, fv, paymentType)
-
     if err != nil {
         return ipmt, ppmt, fmt.Errorf("interest_and_principal_payments internal error: %v", err)
     }
 
     capital := pv
 
-    for i := 1; i <= numPeriods; i++ {
+    // Because of the commulative rounding error, we will always have
+    // unmatching values at the end of the `numPeriods` between the principal
+    // payment and the capital. To solve this, the last principal, and interest
+    // payment, will be caltulated directly from the projected remaining
+    // capital.
+    var interest_payment, principal_payment float64
+    for i := 1; i < numPeriods; i++ {
         if paymentType == PayBegin && i == 1 {
-            ipmt = append(ipmt, 0.00)
+            interest_payment = 0.0
         } else {
-            interest_payment := utils.Round2(- capital * rate)
-            ipmt = append(ipmt, interest_payment)
-            principal_payment := utils.Round2(pmt - interest_payment)
-            ppmt = append(ppmt, principal_payment)
-            capital = capital + principal_payment
+            interest_payment = utils.Round2(- capital * rate)
         }
+        ipmt = append(ipmt, interest_payment)
+        principal_payment = utils.Round2(pmt - interest_payment)
+        ppmt = append(ppmt, principal_payment)
+        capital = capital + principal_payment
+        capital = utils.Round2(capital)
     }
 
-    capital = utils.Round2(capital)
+    // TODO: Look out for the cases where the `fv` is different from 0, there
+    // could be more inconsistencies hidden.
 
-    if capital != fv {
-        log.Printf("Capital: %v  FV: %v", capital, fv)
+    interest_payment = utils.Round2(- capital * rate)
+    ipmt = append(ipmt, interest_payment)
+    principal_payment = utils.Round2(- capital + fv)
+    ppmt = append(ppmt, principal_payment)
+    capital = utils.Round2(capital + principal_payment)
+
+    if capital != fv{
+        log.Printf("capital: %v  fv: %v", capital, fv)
         return ipmt, ppmt, &ValidationError{"pv", capital, "pv doesnt' match fv at the end of the numPeriods"}
     }
     return ipmt, ppmt, nil
