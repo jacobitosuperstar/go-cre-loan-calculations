@@ -34,6 +34,69 @@ type LoanSizer struct {
     LoanOriginationFees float64
 }
 
+// Constructor
+
+// NewLoanSizer returns a LoanSizer struct if the values given are valid. If
+// not, returns a default struct with the error.
+func NewLoanSizer(
+    maxLTV float64,
+    minDSCR float64,
+    amortization int,
+    term int,
+    ioPeriod int,
+    interestRate float64,
+    propertyValue int,
+    noi float64,
+    requestedLoanAmount int,
+    loanOriginationFees float64,
+) (
+    LoanSizer,
+    error,
+) {
+    // Data Validation
+    if maxLTV > 1 {
+        return LoanSizer{}, fmt.Errorf("The loan to value ratio cannot be greater than 1.")
+    }
+    if minDSCR < 1 {
+        return LoanSizer{}, fmt.Errorf("The minDSCR cannot be lower than 1.")
+    }
+    if term > amortization {
+        return LoanSizer{}, fmt.Errorf("The term of the loan cannot be greater than its amortization.")
+    }
+    if ioPeriod < 0 {
+        return LoanSizer{}, fmt.Errorf("The ioPeriod cannot be than zero.")
+    }
+    if ioPeriod > term {
+        return LoanSizer{}, fmt.Errorf("The ioPeriod cannot be greater than the term of the loan.")
+    }
+    if interestRate < 0 {
+        return LoanSizer{}, fmt.Errorf("The interest rate of a loan cannot be negative.")
+    }
+    if propertyValue < 0 {
+        return LoanSizer{}, fmt.Errorf("The property cannot have a value below zero.")
+    }
+    if requestedLoanAmount < 0 {
+        return LoanSizer{}, fmt.Errorf("The requestedLoanAmount cannot have a value below zero.")
+    }
+    if requestedLoanAmount == 0 {
+        requestedLoanAmount = propertyValue
+    }
+    // Struct Creation
+    ls := LoanSizer{
+        MaxLTV: maxLTV,
+        MinDSCR: minDSCR,
+        Amortization: amortization,
+        Term: term,
+        IOPeriod: ioPeriod,
+        Rate: interestRate,
+        PropertyValue: propertyValue,
+        NOI: noi,
+        RequestedLoanAmount: requestedLoanAmount,
+        LoanOriginationFees: loanOriginationFees,
+    }
+    return ls, nil
+}
+
 // Calculation methods
 
 // Internal
