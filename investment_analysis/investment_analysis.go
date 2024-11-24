@@ -2,11 +2,13 @@
 // our real state buys
 
 // TODO: how is the projected return of our investment?
-// [ ] TaxAssumptions
-// [ ] DealMetrics
-// [ ] LoanTerms
-// [ ] SaleMetrics
+// [X] TaxAssumptions
+// [X] DealMetrics
+// [X] LoanTerms
+// [X] SaleMetrics
 // [ ] ReturnOfInvestment
+// [ ] Target ROI
+// [ ] Objective Search
 
 package investment_analysis
 
@@ -27,26 +29,114 @@ type TaxAssumptions struct {
     DepreciationRecaptureTaxRate    float64
 }
 
+// NewTaxAssumptions returns a new TaxAssumptions struct with the passed in
+// values. If there is an error within the values the function returns a
+// default struct and an error.
+func NewTaxAssumptions (
+    lanBuildingValue                float64,
+    fixDepreciationTimeLine         int,
+    incomeTaxRate                   float64,
+    capitalGainsTaxRate             float64,
+    depreciationRecaptureTaxRate    float64,
+) (
+    TaxAssumptions,
+    error,
+) {
+    // Data Validation
+    if lanBuildingValue > 1 {
+        return TaxAssumptions{}, fmt.Errorf("lanBuildingValue cannot be greater than 1")
+    }
+    if fixDepreciationTimeLine < 0 {
+        return TaxAssumptions{}, fmt.Errorf("fixDepreciationTimeLine cannot be lower than 0")
+    }
+    if incomeTaxRate > 1 {
+        return TaxAssumptions{}, fmt.Errorf("incomeTaxRate cannot be greater than 1")
+    }
+    if capitalGainsTaxRate > 1 {
+        return TaxAssumptions{}, fmt.Errorf("capitalGainsTaxRate cannot be greater than 1")
+    }
+    if depreciationRecaptureTaxRate > 1 {
+        return TaxAssumptions{}, fmt.Errorf("depreciationRecaptureTaxRate cannot be greater than 1")
+    }
+    // Struct Creation
+    taxAssumptions := TaxAssumptions{
+        LanBuildingValue: lanBuildingValue,
+        FixDepreciationTimeLine: fixDepreciationTimeLine,
+        IncomeTaxRate: incomeTaxRate,
+        CapitalGainsTaxRate: capitalGainsTaxRate,
+        DepreciationRecaptureTaxRate: depreciationRecaptureTaxRate,
+    }
+    return taxAssumptions, nil
+}
+
 // DealInformation is a struct that has all the information regarding the
 // buying of the commercial property.
 type DealInformation struct {
-    PurchasePrice               int
-    ClosingAndRenovations       int
-    GoingInCapRate              float64
-    InitRevenue                 float64
-    InitOperatingExpenses       float64
-    InitCapitalReserves         float64
-    ProjRevenueGrowth           float64
-    ProjOperatingExpensesGrowth float64
-    ProjCapitalReservesGrowth   float64
+    PurchasePrice                   int
+    ClosingAndRenovations           int
+    GoingInCapRate                  float64
+    InitRevenue                     float64
+    InitOperatingExpenses           float64
+    InitCapitalReserves             float64
+    ProjRevenueGrowth               float64
+    ProjOperatingExpensesGrowth     float64
+    ProjCapitalReservesGrowth       float64
 }
+
+// NewDealInformation returns a DealInformation struct with the passed in
+// values. If there is an error within the values the function returns a
+// default struct and an error.
+func NewDealInformation (
+    purchasePrice               int,
+    closingAndRenovations       int,
+    goingInCapRate              float64,
+    initialRevenue              float64,
+    initialExpenses             float64,
+    initialCapitalReserves      float64,
+) (
+    DealInformation,
+    error,
+) {
+    // Data Validation
+    if purchasePrice < 0 {
+        return DealInformation{}, fmt.Errorf("purchasePrice of the property cannot be lower than 0.")
+    }
+    if closingAndRenovations > 0 {
+        return DealInformation{}, fmt.Errorf("closingAndRenovations of the property cannot be greater than 0.")
+    }
+    if initialRevenue < 0 {
+        return DealInformation{}, fmt.Errorf("initialRevenue cannot be lower than 0.")
+    }
+    if initialExpenses > 0 {
+        return DealInformation{}, fmt.Errorf("initialExpenses cannot be lower than 0.")
+    }
+    if initialCapitalReserves < 0 {
+        return DealInformation{}, fmt.Errorf("initialCapitalReserves cannot be lower than 0.")
+    }
+    if purchasePrice == 0 {
+        initialNOI := initialRevenue + initialExpenses
+        purchasePrice = int(math.Floor(initialNOI/goingInCapRate))
+    }
+
+    // Struct Creation
+    dealInformation := DealInformation{
+        PurchasePrice: purchasePrice,
+        ClosingAndRenovations: closingAndRenovations,
+        GoingInCapRate: goingInCapRate,
+        InitRevenue: initialRevenue,
+        InitOperatingExpenses: initialExpenses,
+        InitCapitalReserves: initialCapitalReserves,
+    }
+    return dealInformation, nil
+}
+
 
 // SaleTerms is a struc that has all the sale information regarding the sale of
 // the sale of the property.
 type SaleTerms struct {
-    ExitCapRate         float64
-    CostOfSale          float64
-    SaleYear            int
+    ExitCapRate     float64
+    CostOfSale      float64
+    SaleYear        int
 }
 
 // ProjectedSalePrice returns the projected sale price of real state.
@@ -56,13 +146,143 @@ func (st SaleTerms) ProjectedSalePrice (noi float64) float64 {
     return utils.Round2(projected_sale_price)
 }
 
+
+// NewSaleTerms creates a new SaleTerms struct. If the data is valid, a new
+// SaleTerms struct is returned, if not an initialized struct is returned with
+// the errors.
+func NewSaleTerms(
+    exitCapRate     float64,
+    costOfSale      float64,
+    saleYear        int,
+) (
+    saleTerms SaleTerms,
+    err error,
+){
+    // Data Validation
+    if costOfSale <= 0 {
+        return saleTerms, fmt.Errorf("costOfSale cannot be lower than 0")
+    }
+    if saleYear <= 0 {
+        return saleTerms, fmt.Errorf("saleYear cannot be lower than 0")
+    }
+    // Struct Creation
+    saleTerms = SaleTerms{
+        ExitCapRate: exitCapRate,
+        CostOfSale: costOfSale,
+        SaleYear: saleYear,
+    }
+    return saleTerms, nil
+}
+
 // ROI of the totallity of the deal.
 type ReturnOfInvestment struct {
-    taxMetrics              TaxAssumptions
-    dealMetrics             DealInformation
-    loanMetrics             ls.LoanSizer
-    saleMetrics             SaleTerms
+    taxMetrics      TaxAssumptions
+    dealMetrics     DealInformation
+    loanMetrics     ls.LoanSizer
+    saleMetrics     SaleTerms
 }
+
+// Constructor
+
+// NewReturnOfInvestment constructs the ReturnOfInvestment struct with the
+// composite information of the deal numbers.
+func NewReturnOfInvestment(
+    // DealInformation
+    purchasePrice                       int,
+    closingAndRenovations               int,
+    goinginCapRate                      float64,
+    initialRevenue                      float64,
+    initialExpenses                     float64,
+    initialCapitalReserves              float64,
+    projectedRevenueGrowth              float64,
+    projectedExpensesGrowth             float64,
+    projectedCapitalReservesGrowth      float64,
+    // LoanSizer
+    maxLTV                              float64,
+    minDSCR                             float64,
+    amortization                        int,
+    term                                int,
+    interestRate                        float64,
+    ioPeriod                            int,
+    requestedLoanAmount                 int,
+    loanOriginationFees                 float64,
+    // TaxAssumptions
+    lanBuildingValue                    float64,
+    fixDepreciationTimeLine             int,
+    incomeTaxRate                       float64,
+    capitalGainsTaxRate                 float64,
+    depreciationRecaptureTaxRate        float64,
+    // SaleTerms
+    exitCapRate                         float64,
+    costOfSale                          float64,
+    saleYear                            int,
+) (
+    ReturnOfInvestment,
+    error,
+) {
+    dealMetrics, err := NewDealInformation(
+        purchasePrice,
+        closingAndRenovations,
+        goinginCapRate,
+        initialRevenue,
+        initialExpenses,
+        initialCapitalReserves,
+    )
+    if err != nil {
+        return ReturnOfInvestment{}, fmt.Errorf("DealMetrics Internal error: %v", err)
+    }
+
+    initialNOI := dealMetrics.InitRevenue + dealMetrics.InitOperatingExpenses
+    loanSizer, err := ls.NewLoanSizer(
+        maxLTV,
+        minDSCR,
+        amortization,
+        term,
+        ioPeriod,
+        interestRate,
+        dealMetrics.PurchasePrice,
+        initialNOI,
+        requestedLoanAmount,
+        loanOriginationFees,
+    )
+    if err != nil {
+        return ReturnOfInvestment{}, fmt.Errorf("LoanSizer Internal error: %v", err)
+    }
+    taxAssumptions, err := NewTaxAssumptions(
+        lanBuildingValue,
+        fixDepreciationTimeLine,
+        incomeTaxRate,
+        capitalGainsTaxRate,
+        depreciationRecaptureTaxRate,
+    )
+    if err != nil {
+        return ReturnOfInvestment{}, fmt.Errorf("TaxAssumptions Internal error: %v", err)
+    }
+
+    saleTerms, err := NewSaleTerms(
+        exitCapRate,
+        costOfSale,
+        saleYear,
+    )
+    if err != nil {
+        return ReturnOfInvestment{}, fmt.Errorf("SaleTerms Internal error: %v", err)
+    }
+
+    roi := ReturnOfInvestment{
+        taxMetrics: taxAssumptions,
+        dealMetrics: dealMetrics,
+        loanMetrics: loanSizer,
+        saleMetrics: saleTerms,
+    }
+    return roi, nil
+}
+
+// Calculation methods
+
+// Internal
+// ...
+
+// External
 
 // AdquisitionCost returns the AdquisitionCost of Deal
 func (roi ReturnOfInvestment) AdquisitionCost () (float64, error)  {
@@ -70,7 +290,7 @@ func (roi ReturnOfInvestment) AdquisitionCost () (float64, error)  {
     if err != nil {
         return 0.0, fmt.Errorf("MaximumLoanAmount internal error: %v", err)
     }
-    adquisitionCost := - float64(roi.dealMetrics.PurchasePrice) -
+    adquisitionCost := - float64(roi.dealMetrics.PurchasePrice) +
     float64(roi.dealMetrics.ClosingAndRenovations) -
     (roi.loanMetrics.LoanOriginationFees * mla) +
     mla
@@ -137,7 +357,7 @@ func (roi ReturnOfInvestment) NetCashFlowProjection () ([]map[string]interface{}
     // NetCashFlowProjection slice.
     for i := 0; i < roi.loanMetrics.Term; i++ {
         // this year NOI
-        current_noi := utils.Round2(revenue - expense)
+        current_noi := utils.Round2(revenue + expense)
         // this year interest and principal payments
         current_ppmt := ppmt[i]
         current_ipmt := ipmt[i]
@@ -225,17 +445,11 @@ func (roi *ReturnOfInvestment) SetAverageCashOnCashReturn () error {
     return nil
 }
 
-// InitReturnOfInvestment sets the calculated terms in the ReturnOfInvestment
-// struct.
-func InitReturnOfInvestment(roi ReturnOfInvestment) ReturnOfInvestment {
-    return roi
-}
-
 // Target ROI of the investment
 type TargetReturnOfInvestment struct {
-    IRR                     float64     `json:"internal_rate_of_return"`
-    EquityMultiple          float64     `json:"equity_multiple"`
-    AverageCashOnCashReturn float64     `json:"average_cash_on_cash_return"`
+    IRR                         float64
+    EquityMultiple              float64
+    AverageCashOnCashReturn     float64
 }
 
 //
