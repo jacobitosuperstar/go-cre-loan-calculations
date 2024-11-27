@@ -1,8 +1,7 @@
 package investment_analysis
 import (
-  "testing";
-  // "math";
-  // "log";
+    "testing";
+    // utils "github.com/jacobitosuperstar/go-cre-loan-calculations/internal/utils";
 )
 
 type TestROI struct {
@@ -193,13 +192,5 @@ func TestROIMethods(t *testing.T) {
               }
           }
       }
-      // log.Printf("roi: %+v\n", net_cash_flow_projection)
-      // t.Errorf("got: %v", net_cash_flow_projection)
-      // ppmt, ipmt, err := roi.loanMetrics.PaymentDistribution()
-      // if err != nil {
-      //     t.Errorf("NetCashFlowProjection error: %v", err)
-      //     return
-      // }
-      // t.Errorf("LOOK HERE ppmt: %v, ipmt: %v", ppmt, ipmt)
     }
 }
