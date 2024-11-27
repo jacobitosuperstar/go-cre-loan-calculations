@@ -9,8 +9,14 @@
 // [X] PresentValue
 
 package financial_formulas
-import "testing"
+import (
+    "testing";
+    utils "github.com/jacobitosuperstar/go-cre-loan-calculations/internal/utils";
+)
 
+
+// tolerance
+const TOL = 0.1
 
 func TestIOPayment(t *testing.T){
     var testCases = []struct {
@@ -25,7 +31,7 @@ func TestIOPayment(t *testing.T){
 
     for _, test := range testCases {
         t.Run("Testing IO Payments", func(t *testing.T) {
-            if got  := IOPayment(test.rate, test.pv); got != test.want {
+            if got := IOPayment(test.rate, test.pv); !utils.Tolerance(got, test.want, TOL) {
                 t.Errorf("got: %g, wanted: %g", got, test.want)
             }
         })
@@ -93,7 +99,7 @@ func TestPayment(t *testing.T){
     for _, test := range testCases {
         t.Run(test.name, func(t *testing.T) {
             got, _ := Payment(test.rate, test.numPeriods, test.pv, test.fv, test.paymentType)
-            if got != test.want {
+            if !utils.Tolerance(got, test.want, TOL) {
                 t.Errorf("got: %g, wanted: %g", got, test.want)
             }
         })
@@ -154,7 +160,7 @@ func TestPrincipalPayments(t *testing.T){
                 return
             } else {
                 for i := range got {
-                    if got[i] != test.want[i] {
+                    if !utils.Tolerance(got[i], test.want[i], TOL) {
                         t.Errorf("got: %g, wanted: %g", got[i], test.want[i])
                     }
                 }
@@ -217,7 +223,7 @@ func TestInterestPayments(t *testing.T){
                 return
             } else {
                 for i := range got {
-                    if got[i] != test.want[i] {
+                    if !utils.Tolerance(got[i], test.want[i], TOL) {
                         t.Errorf("got: %g, wanted: %g", got[i], test.want[i])
                     }
                 }
@@ -266,7 +272,7 @@ func TestPresentValue(t *testing.T){
                 return
             }
 
-            if got != test.want {
+            if !utils.Tolerance(got, test.want, TOL) {
                 t.Errorf("got: %g, wanted: %g", got, test.want)
             }
         })

@@ -34,6 +34,69 @@ type LoanSizer struct {
     LoanOriginationFees float64
 }
 
+// Constructor
+
+// NewLoanSizer returns a LoanSizer struct if the values given are valid. If
+// not, returns a default struct with the error.
+func NewLoanSizer(
+    maxLTV float64,
+    minDSCR float64,
+    amortization int,
+    term int,
+    ioPeriod int,
+    interestRate float64,
+    propertyValue int,
+    noi float64,
+    requestedLoanAmount int,
+    loanOriginationFees float64,
+) (
+    LoanSizer,
+    error,
+) {
+    // Data Validation
+    if maxLTV < 0 || maxLTV > 1 {
+        return LoanSizer{}, fmt.Errorf("The loan to value ratio must be between 0 and 1.")
+    }
+    if minDSCR < 1 {
+        return LoanSizer{}, fmt.Errorf("The minDSCR cannot be lower than 1.")
+    }
+    if term > amortization {
+        return LoanSizer{}, fmt.Errorf("The term of the loan cannot be greater than its amortization.")
+    }
+    if ioPeriod < 0 {
+        return LoanSizer{}, fmt.Errorf("The ioPeriod cannot be than zero.")
+    }
+    if ioPeriod > term {
+        return LoanSizer{}, fmt.Errorf("The ioPeriod cannot be greater than the term of the loan.")
+    }
+    if interestRate < 0 || interestRate > 1 {
+        return LoanSizer{}, fmt.Errorf("The interest rate of a loan must be between 0 and 1.")
+    }
+    if propertyValue < 0 {
+        return LoanSizer{}, fmt.Errorf("The property cannot have a value below zero.")
+    }
+    if requestedLoanAmount < 0 {
+        return LoanSizer{}, fmt.Errorf("The requestedLoanAmount cannot have a value below zero.")
+    }
+    if requestedLoanAmount == 0 {
+        requestedLoanAmount = propertyValue
+    }
+    // Struct Creation
+    ls := LoanSizer{
+        MaxLTV: maxLTV,
+        MinDSCR: minDSCR,
+        Amortization: amortization,
+        Term: term,
+        IOPeriod: ioPeriod,
+        Rate: interestRate,
+        PropertyValue: propertyValue,
+        NOI: noi,
+        RequestedLoanAmount: requestedLoanAmount,
+        LoanOriginationFees: loanOriginationFees,
+    }
+    return ls, nil
+}
+
 // Calculation methods
 
 // Internal
@@ -102,7 +165,7 @@ func (ls LoanSizer) LoanPayment () (float64, error) {
 
 // BallonPayment returns the balloon payment at the end of the term for the
 // maximum loan amount.
-func (ls *LoanSizer) BalloonPayment () (float64, error) {
+func (ls *LoanSizer) EndofTermBalloonPayment () (float64, error) {
     mla, err := ls.MaximumLoanAmount()
     if err != nil {
         return 0.0, fmt.Errorf("MaximumLoanAmount internal error: %v", err)
@@ -123,6 +186,34 @@ func (ls *LoanSizer) BalloonPayment () (float64, error) {
     // There is no need to create a new slice that will contain only the term
     // as the iteration will iterate till the term value. Genious move!!.
     for i:=0; i < ls.Term; i++ {
+        capital += principal_payments[i]
+    }
+    return utils.Round2(capital), nil
+}
+
+// SaleYearBallonPayment returns the balloon payment at year that the property
+// is being sold.
+func (ls *LoanSizer) SaleYearBalloonPayment (saleYear int) (float64, error) {
+    mla, err := ls.MaximumLoanAmount()
+    if err != nil {
+        return 0.0, fmt.Errorf("MaximumLoanAmount internal error: %v", err)
+    }
+    principal_payments, err := ff.PrincipalPayments(ls.Rate, ls.Amortization, mla, 0, 0)
+    if err != nil {
+        return 0.0, fmt.Errorf("PrincipalPayments internal error: %v", err)
+    }
+
+    // here we create a 0s array and then append to it the principal payments
+    // array that will represent the no principal payment while the IO period.
+    if ls.IOPeriod > 0 {
+        io_period_ppmt := make([]float64, ls.IOPeriod)
+        principal_payments = append(io_period_ppmt, principal_payments...)
+    }
+
+    capital := mla
+    // There is no need to create a new slice that will contain only the term
+    // as the iteration will iterate till the term value. Genious move!!.
+    for i:=0; i < saleYear; i++ {
         capital += principal_payments[i]
     }
     return utils.Round2(capital), nil

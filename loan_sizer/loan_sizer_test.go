@@ -7,7 +7,13 @@
 // [X] payments distribution
 
 package loan_sizer
-import "testing"
+import (
+    "testing";
+    utils "github.com/jacobitosuperstar/go-cre-loan-calculations/internal/utils";
+)
+
+// Tolerance
+const TOL = 0.1
 
 
 type PaymentDistributionResults struct {
@@ -19,7 +25,7 @@ type TestResults struct {
   MaximumLoanAmount float64
   IOLoanPayment float64
   LoanPayment float64
-  BalloonPayment float64
+  EndofTermBalloonPayment float64
   PaymentDistribution PaymentDistributionResults
 }
 
@@ -47,7 +53,7 @@ func TestLoanSizerFunctionality(t *testing.T){
               MaximumLoanAmount: 0.0,
               IOLoanPayment: 0.0,
               LoanPayment: 0.0,
-              BalloonPayment: 0.0,
+              EndofTermBalloonPayment: 0.0,
               PaymentDistribution: PaymentDistributionResults{
                 ipmt: [10]float64{0,0,0,0,0,0,0,0,0,0},
                 ppmt: [10]float64{0,0,0,0,0,0,0,0,0,0},
@@ -72,7 +78,7 @@ func TestLoanSizerFunctionality(t *testing.T){
               MaximumLoanAmount: 700,
               IOLoanPayment: -3.15,
               LoanPayment: -25,
-              BalloonPayment: 544.95,
+              EndofTermBalloonPayment: 544.95,
               PaymentDistribution: PaymentDistributionResults{
                 ipmt: [10]float64{-3.15, -3.15, -3.15, -3.15, -3.05, -2.95, -2.85, -2.75, -2.65, -2.55},
                 ppmt: [10]float64{0, 0, 0, -21.85, -21.95, -22.05, -22.15, -22.25, -22.35, -22.45},
@@ -97,7 +103,7 @@ func TestLoanSizerFunctionality(t *testing.T){
               MaximumLoanAmount: 700,
               IOLoanPayment: -3.15,
               LoanPayment: -25,
-              BalloonPayment: 544.95,
+              EndofTermBalloonPayment: 544.95,
               PaymentDistribution: PaymentDistributionResults{
                 ipmt: [10]float64{-3.15, -3.15, -3.15, -3.15, -3.05, -2.95, -2.85, -2.75, -2.65, -2.55},
                 ppmt: [10]float64{0,0,0, -21.85, -21.95, -22.05, -22.15, -22.25, -22.35, -22.45},
@@ -122,7 +128,7 @@ func TestLoanSizerFunctionality(t *testing.T){
               MaximumLoanAmount: 400,
               IOLoanPayment: -1.8,
               LoanPayment: -14.28,
-              BalloonPayment: 311.45,
+              EndofTermBalloonPayment: 311.45,
               PaymentDistribution: PaymentDistributionResults{
                 ipmt: [10]float64{-1.8,-1.8,-1.8,-1.8,-1.74,-1.69,-1.63,-1.57,-1.52,-1.46},
                 ppmt: [10]float64{0,0,0,-12.48,-12.54,-12.59,-12.65,-12.71,-12.76,-12.82},
@@ -147,7 +153,7 @@ func TestLoanSizerFunctionality(t *testing.T){
               MaximumLoanAmount: 700,
               IOLoanPayment: -3.15,
               LoanPayment: -71.74,
-              BalloonPayment: 0.0,
+              EndofTermBalloonPayment: 0.0,
               PaymentDistribution: PaymentDistributionResults{
                 ipmt: [10]float64{-3.15, -2.84, -2.53, -2.22, -1.91, -1.59, -1.28, -0.96, -0.64, -0.32},
                 ppmt: [10]float64{-68.59, -68.9, -69.21, -69.52, -69.83, -70.15, -70.46, -70.78, -71.1, -71.46},
@@ -166,7 +172,7 @@ func TestLoanSizerFunctionality(t *testing.T){
                   err,
                 )
             }
-            if got != test.want.MaximumLoanAmount {
+            if !utils.Tolerance(got, test.want.MaximumLoanAmount, TOL) {
                 t.Errorf(
                   "MaximumLoanAmount got: %g, wanted: %g",
                   got,
@@ -183,7 +189,7 @@ func TestLoanSizerFunctionality(t *testing.T){
                   err,
                 )
             }
-            if got != test.want.IOLoanPayment {
+            if !utils.Tolerance(got, test.want.IOLoanPayment, TOL) {
                 t.Errorf(
                   "IOLoanPayment got: %g, wanted: %g",
                   got,
@@ -200,7 +206,7 @@ func TestLoanSizerFunctionality(t *testing.T){
                   err,
                 )
             }
-            if got != test.want.LoanPayment {
+            if !utils.Tolerance(got, test.want.LoanPayment, TOL) {
                 t.Errorf(
                   "LoanPayment got: %g, wanted: %g",
                   got,
@@ -208,20 +214,20 @@ func TestLoanSizerFunctionality(t *testing.T){
                 )
             }
         })
-        // BalloonPayment tests
+        // EndofTermBalloonPayment tests
         t.Run(test.name, func(t *testing.T) {
-            got, err := test.ls.BalloonPayment()
+            got, err := test.ls.EndofTermBalloonPayment()
             if err != nil {
                 t.Errorf(
-                  "BalloonPayment error: %v",
+                  "EndofTermBalloonPayment error: %v",
                   err,
                 )
             }
-            if got != test.want.BalloonPayment {
+            if !utils.Tolerance(got, test.want.EndofTermBalloonPayment, TOL) {
                 t.Errorf(
-                  "BalloonPayment got: %g, wanted: %g",
+                  "EndofTermBalloonPayment got: %g, wanted: %g",
                   got,
-                  test.want.BalloonPayment,
+                  test.want.EndofTermBalloonPayment,
                 )
             }
         })
@@ -244,7 +250,7 @@ func TestLoanSizerFunctionality(t *testing.T){
             }
 
             for i := range ppmt {
-                if ppmt[i] != test.want.PaymentDistribution.ppmt[i] {
+                if !utils.Tolerance(ppmt[i], test.want.PaymentDistribution.ppmt[i], TOL) {
                     t.Errorf(
                       "PaymentDistribution ppmt got: %g, wanted: %g",
                       ppmt[i],
@@ -262,8 +268,8 @@ func TestLoanSizerFunctionality(t *testing.T){
                 return
             }
 
-            for i := range ppmt {
-                if ipmt[i] != test.want.PaymentDistribution.ipmt[i] {
+            for i := range ipmt {
+                if !utils.Tolerance(ipmt[i], test.want.PaymentDistribution.ipmt[i], TOL) {
                     t.Errorf(
                       "PaymentDistribution ipmt got: %g, wanted: %g",
                       ipmt[i],

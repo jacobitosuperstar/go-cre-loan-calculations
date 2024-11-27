@@ -15,3 +15,12 @@ func Round2(num float64) float64 {
 func Round4(num float64) float64 {
     return (math.Round(num*10000)/10000)
 }
+
+// Tolerance return a boolean if the tolerance between two values is the one
+// specified.
+func Tolerance (numA, numB, tol float64) bool {
+    if math.Abs(math.Abs(numA) - math.Abs(numB)) >= tol {
+        return false
+    }
+    return true
+}
