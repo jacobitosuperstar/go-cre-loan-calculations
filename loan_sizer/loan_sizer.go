@@ -126,7 +126,7 @@ func (ls LoanSizer) max_mindscr_loan_amount () (float64, error) {
 // MaximumLoanAmount returns the maximum loan amount of a LoanSizer struct,
 // with the ltv and dscr restrictions. If the RequestedLoanAmount is lower than
 // the possibly higher loan amount, the RequestedLoanAmount will be returned.
-func (ls *LoanSizer) MaximumLoanAmount () (float64, error) {
+func (ls LoanSizer) MaximumLoanAmount () (float64, error) {
     max_mindscr_loan_amount, err := ls.max_mindscr_loan_amount()
     if err != nil {
         return 0, fmt.Errorf("max_mindscr_loan_amount internal error: %v", err)
