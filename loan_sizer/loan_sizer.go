@@ -54,8 +54,8 @@ func NewLoanSizer(
     error,
 ) {
     // Data Validation
-    if maxLTV > 1 {
-        return LoanSizer{}, fmt.Errorf("The loan to value ratio cannot be greater than 1.")
+    if maxLTV < 0 || maxLTV > 1 {
+        return LoanSizer{}, fmt.Errorf("The loan to value ratio must be between 0 and 1.")
     }
     if minDSCR < 1 {
         return LoanSizer{}, fmt.Errorf("The minDSCR cannot be lower than 1.")
@@ -69,8 +69,8 @@ func NewLoanSizer(
     if ioPeriod > term {
         return LoanSizer{}, fmt.Errorf("The ioPeriod cannot be greater than the term of the loan.")
     }
-    if interestRate < 0 {
-        return LoanSizer{}, fmt.Errorf("The interest rate of a loan cannot be negative.")
+    if interestRate < 0 || interestRate > 1 {
+        return LoanSizer{}, fmt.Errorf("The interest rate of a loan must be between 0 and 1.")
     }
     if propertyValue < 0 {
         return LoanSizer{}, fmt.Errorf("The property cannot have a value below zero.")
