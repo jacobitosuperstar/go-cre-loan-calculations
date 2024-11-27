@@ -43,20 +43,20 @@ func NewTaxAssumptions (
     error,
 ) {
     // Data Validation
-    if lanBuildingValue > 1 {
-        return TaxAssumptions{}, fmt.Errorf("lanBuildingValue cannot be greater than 1")
+    if lanBuildingValue < 0 || lanBuildingValue > 1 {
+        return TaxAssumptions{}, fmt.Errorf("LanBuildingValue must be between 0 and 1")
     }
     if fixDepreciationTimeLine < 0 {
-        return TaxAssumptions{}, fmt.Errorf("fixDepreciationTimeLine cannot be lower than 0")
+        return TaxAssumptions{}, fmt.Errorf("FixDepreciationTimeLine cannot be lower than 0")
     }
-    if incomeTaxRate > 1 {
-        return TaxAssumptions{}, fmt.Errorf("incomeTaxRate cannot be greater than 1")
+    if incomeTaxRate < 0 || incomeTaxRate > 1 {
+        return TaxAssumptions{}, fmt.Errorf("IncomeTaxRate must be between 0 and 1")
     }
-    if capitalGainsTaxRate > 1 {
-        return TaxAssumptions{}, fmt.Errorf("capitalGainsTaxRate cannot be greater than 1")
+    if capitalGainsTaxRate < 0 || capitalGainsTaxRate > 1 {
+        return TaxAssumptions{}, fmt.Errorf("CapitalGainsTaxRate must be between 0 and 1")
     }
-    if depreciationRecaptureTaxRate > 1 {
-        return TaxAssumptions{}, fmt.Errorf("depreciationRecaptureTaxRate cannot be greater than 1")
+    if depreciationRecaptureTaxRate < 0 || depreciationRecaptureTaxRate > 1 {
+        return TaxAssumptions{}, fmt.Errorf("DepreciationRecaptureTaxRate must be between 0 and 1")
     }
     // Struct Creation
     taxAssumptions := TaxAssumptions{
@@ -93,26 +93,45 @@ func NewDealInformation (
     initialRevenue              float64,
     initialExpenses             float64,
     initialCapitalReserves      float64,
+    projectedRevenueGrowth      float64,
+    projectedExpensesGrowth     float64,
+    projectedCapitalReservesGrowth float64,
 ) (
     DealInformation,
     error,
 ) {
     // Data Validation
-    if purchasePrice < 0 {
-        return DealInformation{}, fmt.Errorf("purchasePrice of the property cannot be lower than 0.")
+    //
+    // TODO: Must evaluate if there is a need to indicate the ranges of values
+    // that these parameters should accept outside percentage values. Are all
+    // of this erros needed?.
+    //
+    // if purchasePrice < 0 {
+    //     return DealInformation{}, fmt.Errorf("purchasePrice of the property cannot be lower than 0.")
+    // }
+    // if closingAndRenovations > 0 {
+    //     return DealInformation{}, fmt.Errorf("closingAndRenovations of the property cannot be greater than 0.")
+    // }
+    // if initialRevenue < 0 {
+    //     return DealInformation{}, fmt.Errorf("initialRevenue cannot be lower than 0.")
+    // }
+    // if initialExpenses > 0 {
+    //     return DealInformation{}, fmt.Errorf("initialExpenses cannot be greater than 0.")
+    // }
+    // if initialCapitalReserves < 0 {
+    //     return DealInformation{}, fmt.Errorf("initialCapitalReserves cannot be greater than 0.")
+    // }
+
+    if projectedRevenueGrowth < 0 {
+        return DealInformation{}, fmt.Errorf("ProjRevenueGrowth must be greater than 0")
     }
-    if closingAndRenovations > 0 {
-        return DealInformation{}, fmt.Errorf("closingAndRenovations of the property cannot be greater than 0.")
+    if projectedExpensesGrowth < 0 {
+        return DealInformation{}, fmt.Errorf("ProjOperatingExpensesGrowth must be greater than 0")
     }
-    if initialRevenue < 0 {
-        return DealInformation{}, fmt.Errorf("initialRevenue cannot be lower than 0.")
+    if projectedCapitalReservesGrowth < 0 {
+        return DealInformation{}, fmt.Errorf("ProjRevenueGrowth must be greater than 0")
     }
-    if initialExpenses > 0 {
-        return DealInformation{}, fmt.Errorf("initialExpenses cannot be lower than 0.")
-    }
-    if initialCapitalReserves < 0 {
-        return DealInformation{}, fmt.Errorf("initialCapitalReserves cannot be lower than 0.")
-    }
+
     if purchasePrice == 0 {
         initialNOI := initialRevenue + initialExpenses
         purchasePrice = int(math.Floor(initialNOI/goingInCapRate))
@@ -126,6 +145,9 @@ func NewDealInformation (
         InitRevenue: initialRevenue,
         InitOperatingExpenses: initialExpenses,
         InitCapitalReserves: initialCapitalReserves,
+        ProjRevenueGrowth: projectedRevenueGrowth,
+        ProjOperatingExpensesGrowth: projectedExpensesGrowth,
+        ProjCapitalReservesGrowth: projectedCapitalReservesGrowth,
     }
     return dealInformation, nil
 }
@@ -159,8 +181,8 @@ func NewSaleTerms(
     err error,
 ){
     // Data Validation
-    if costOfSale <= 0 {
-        return saleTerms, fmt.Errorf("costOfSale cannot be lower than 0")
+    if costOfSale < 0 || costOfSale > 1 {
+        return saleTerms, fmt.Errorf("costOfSale must be between 0 and 1")
     }
     if saleYear <= 0 {
         return saleTerms, fmt.Errorf("saleYear cannot be lower than 0")
@@ -227,9 +249,12 @@ func NewReturnOfInvestment(
         initialRevenue,
         initialExpenses,
         initialCapitalReserves,
+        projectedRevenueGrowth,
+        projectedExpensesGrowth,
+        projectedCapitalReservesGrowth,
     )
     if err != nil {
-        return ReturnOfInvestment{}, fmt.Errorf("DealMetrics Internal error: %v", err)
+        return ReturnOfInvestment{}, fmt.Errorf("NewDealMetrics Internal error: %v", err)
     }
 
     initialNOI := dealMetrics.InitRevenue + dealMetrics.InitOperatingExpenses
@@ -246,7 +271,7 @@ func NewReturnOfInvestment(
         loanOriginationFees,
     )
     if err != nil {
-        return ReturnOfInvestment{}, fmt.Errorf("LoanSizer Internal error: %v", err)
+        return ReturnOfInvestment{}, fmt.Errorf("NewLoanSizer Internal error: %v", err)
     }
     taxAssumptions, err := NewTaxAssumptions(
         lanBuildingValue,
@@ -256,16 +281,19 @@ func NewReturnOfInvestment(
         depreciationRecaptureTaxRate,
     )
     if err != nil {
-        return ReturnOfInvestment{}, fmt.Errorf("TaxAssumptions Internal error: %v", err)
+        return ReturnOfInvestment{}, fmt.Errorf("NewTaxAssumptions Internal error: %v", err)
     }
 
+    if saleYear > term {
+        return ReturnOfInvestment{}, fmt.Errorf("The year of sale cannot be greater than the year on which the term ends.")
+    }
     saleTerms, err := NewSaleTerms(
         exitCapRate,
         costOfSale,
         saleYear,
     )
     if err != nil {
-        return ReturnOfInvestment{}, fmt.Errorf("SaleTerms Internal error: %v", err)
+        return ReturnOfInvestment{}, fmt.Errorf("NewSaleTerms Internal error: %v", err)
     }
 
     roi := ReturnOfInvestment{
@@ -347,15 +375,15 @@ func (roi ReturnOfInvestment) NetCashFlowProjection () ([]map[string]interface{}
         return net_cash_flow_projection, fmt.Errorf("LoanPayment internal error: %v", err)
     }
 
-    // BalloonPayment at the end of the term
-    balloonpayment, err := roi.loanMetrics.BalloonPayment()
+    // BalloonPayment at the year of sale
+    balloonpayment, err := roi.loanMetrics.SaleYearBalloonPayment(roi.saleMetrics.SaleYear)
     if err != nil {
         return net_cash_flow_projection, fmt.Errorf("BalloonPayment internal error: %v", err)
     }
 
     // Iterating over the term and appending the values to the
     // NetCashFlowProjection slice.
-    for i := 0; i < roi.loanMetrics.Term; i++ {
+    for i := 0; i < roi.saleMetrics.SaleYear; i++ {
         // this year NOI
         current_noi := utils.Round2(revenue + expense)
         // this year interest and principal payments
