@@ -6,6 +6,7 @@
 // [X] DealMetrics
 // [X] LoanTerms
 // [X] SaleMetrics
+// [X] NetCashFlowProjection
 // [ ] ReturnOfInvestment
 // [ ] Target ROI
 // [ ] Objective Search
@@ -460,32 +461,3 @@ func (roi ReturnOfInvestment) NetCashFlowProjection () ([]map[string]interface{}
     // Setting the value
     return net_cash_flow_projection, nil
 }
-
-func (roi *ReturnOfInvestment) SetIRR () error {
-    return nil
-}
-
-func (roi *ReturnOfInvestment) SetEquityMultiple () error {
-    return nil
-}
-
-func (roi *ReturnOfInvestment) SetAverageCashOnCashReturn () error {
-    return nil
-}
-
-// Target ROI of the investment
-type TargetReturnOfInvestment struct {
-    IRR                         float64
-    EquityMultiple              float64
-    AverageCashOnCashReturn     float64
-}
-
-//
-// func InitTargetReturnOfInvestment (roi ReturnOfInvestment)  (ReturnOfInvestment, error) {
-//     roi.SetAdquisitionCost()
-//     err := roi.SetNetCashFlowProjection()
-//     if err != nil {
-//         return roi, err
-//     }
-//     return roi, nil
-// }
